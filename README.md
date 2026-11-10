@@ -99,59 +99,15 @@ the SignalK server — currently admin):
   1 GB, with the filename in an `X-File-Name` header; images, PDFs, text
   and media are served inline and open in the browser, images also as a
   gallery on the task page; everything else downloads)
-- `GET/POST /logs` (POST creates a standalone entry), `PUT/DELETE /logs/:id`
+- `GET /logs`, `PUT/DELETE /logs/:id`
 - `GET/POST /logs/:id/files`, `GET/DELETE /logs/:id/files/:fileId` (the same
   attachment protocol for a log entry — photos of the work, receipts —
   picked when marking a task complete or editing an entry; each entry's
   `files` ride on the log responses)
 - `GET /tags`
-- `GET /stats`, `GET /health`
+- `GET /health`
 
-### OpenAPI and MCP discovery
-
-The plugin exposes an OpenAPI 3.0.3 document through Signal K's native
-`getOpenApi()` hook. With the plugin enabled, retrieve it from:
-
-```text
-GET /skServer/openapi/plugins/signalk-maintenance-tracker
-```
-
-The document describes all 22 existing operations, with stable operation IDs,
-query parameters, JSON request/response schemas, errors and mutation effects.
-Its server URL is `/plugins/signalk-maintenance-tracker`; paths include `/api`
-(for example, `/api/tasks`). Authentication and route permissions remain with
-Signal K; the current routes require admin access. Discovery does not grant
-permission to execute them.
-
-With [signalk-mcp](https://github.com/arodus/signalk-mcp), inspect
-`describe_capability` with `{"id":"plugin.signalk-maintenance-tracker"}`.
-An administrator must review and save each desired operation in the gateway's
-Plugin Config. After approving `listTasks` (`GET /api/tasks`), call
-`execute_capability` with:
-
-```json
-{
-  "id": "plugin.signalk-maintenance-tracker",
-  "operation": "listTasks",
-  "arguments": { "status": "overdue,due_soon", "page": 1, "pageSize": 20 }
-}
-```
-
-JSON mutations use `execute_mutation` with a separately approved operation and
-JSON input under `arguments.body`. Review `completeTask` carefully: logging a
-completion clears its one-time deadline, archives a one-off task, and may consume
-linked inventory. Use `consume_stock: false` to skip inventory consumption.
-Retrying a completion can create duplicate logs and consume stock again.
-
-Attachment metadata and deletion operations have JSON-compatible contracts.
-Raw uploads and binary downloads are documented for ordinary HTTP clients but
-are not supported by the gateway's JSON tools. The log attachment parameter is
-named `attachmentId` in OpenAPI (the router calls that same URL segment `fileId`).
-Gateway input and response-size limits still apply; large strings, collections
-or unpaginated task logs may exceed them.
-
-The implementation contract is in [src/api/openapi.ts](src/api/openapi.ts).
-See [docs/specification.md](docs/specification.md) for the original design spec.
+See [docs/specification.md](docs/specification.md) for the full spec.
 
 ## Development
 
