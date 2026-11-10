@@ -35,6 +35,23 @@ npm --prefix frontend run vendor   # re-copies ESM files into public/vendor/
 For backend work, `npm run watch:backend` and restart the plugin from the
 admin UI.
 
+## OpenAPI contract
+
+`src/api/openapi.ts` describes the existing routes in `src/api/router.ts` and is
+returned by the plugin's `getOpenApi()` hook. Keep operation IDs stable and
+update the document when changing a route, input, response or side effect.
+Request schemas describe the supported typed input; service validation still
+checks cross-field rules. They do not add runtime validation middleware.
+
+`src/api/openapi.test.ts` validates the OpenAPI document, compares its method/path
+inventory with the actual Express router and validates synthetic HTTP responses
+for every operation, including file uploads/downloads and representative errors.
+The tests use an in-memory database and temporary attachments, with no inventory
+service or vessel hardware. Run them with `npm run test:backend`.
+
+The document compiles into `dist/api/openapi.js` and ships with the existing
+`dist/` package inclusion; no runtime dependency or separate spec route is needed.
+
 ## CI
 
 Every push and pull request runs
